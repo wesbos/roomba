@@ -57,20 +57,12 @@ npm install
 npm run dev
 ```
 
+When you are ready to deploy the app, you can compile it into a single file, and then convert to byte code with `./compile_page_bytes.sh`
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
-
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments
 
-- iRobot for creating the Roomba
-- The Node.js community
-- All contributors to this project
-
-## Support
-
-If you encounter any issues or have questions, please file an issue on the GitHub repository.
+Initial code for the ESP32 wireless serial bridge comes from <https://github.com/TAR-ALEX/ESP32-Wireless-Serial-Web-Interface>
