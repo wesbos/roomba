@@ -8,7 +8,18 @@ interface RoombaCommand {
   commands: number[];
 }
 
-const WEBSOCKET_URL = "ws://192.168.1.22/ws";
+function getWebSocketUrl() {
+  if (!import.meta.env.VITE_APP_ON_DEVICE) {
+    console.log("Using default url");
+    return "ws://192.168.1.22/ws"; // We are in development mode, so we use the default url
+  }
+  // Otherwise we default to the current url:
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  console.log(`Using ${protocol}://${window.location.hostname}/ws`);
+  return `${protocol}://${window.location.hostname}/ws`;
+}
+
+const WEBSOCKET_URL = getWebSocketUrl();
 const RECONNECT_INTERVAL = 1000; // 1 second
 
 export function RoombaController() {
@@ -18,6 +29,13 @@ export function RoombaController() {
   const [sensorBuffer, setSensorBuffer] = useState<number[]>([]);
   const [sensorData, setSensorData] = useState<SensorData | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [motorBits, setMotorBits] = useState({
+    sideBrush: false,
+    vacuum: false,
+    mainBrush: false,
+    sideBrushDirection: false,
+    mainBrushDirection: false
+  });
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const outputRef = useRef<HTMLTextAreaElement>(null);
@@ -212,11 +230,11 @@ export function RoombaController() {
                 <div className="grid grid-cols-3 gap-2 relative">
                   <button
                     onClick={() => sendCommand({ commands: [142, 0] })}
-                    className="px-3 py-2 text-xs bg-gradient-to-r from-indigo-500 to-indigo-400 text-gray-900 rounded-md hover:from-indigo-400 hover:to-indigo-300 transition-all duration-300 font-bold relative group"
+                    className="px-3 py-2 text-xs bg-indigo-500 text-gray-900 rounded-md hover:bg-indigo-400 font-bold"
                   >
-                    <span className="relative z-10">REQUEST SENSORS</span>
+                    REQUEST SENSORS
                   </button>
-                  <label className="relative inline-flex items-center justify-center px-3 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 transition-all duration-300 rounded-md group cursor-pointer">
+                  <label className="relative inline-flex items-center justify-center px-3 py-2 bg-amber-500 hover:bg-amber-400 rounded-md cursor-pointer">
                     <input
                       type="checkbox"
                       className="sr-only peer"
@@ -224,15 +242,143 @@ export function RoombaController() {
                         sendCommand({ commands: [139, 255, 0, e.target.checked ? 255 : 0] });
                       }}
                     />
-                    <span className="text-gray-900 font-bold text-xs relative z-10">LED</span>
-                    <div className="absolute right-2 w-3 h-3 bg-gradient-to-r from-white/30 to-white/20 peer-checked:from-white peer-checked:to-white peer-checked:shadow-lg peer-checked:shadow-white/50 rounded-full transition-all duration-300"></div>
+                    <span className="text-gray-900 font-bold text-xs">LED</span>
+                    <div className="absolute right-2 w-3 h-3 bg-white rounded-full"></div>
                   </label>
                   <button
                     onClick={() => sendCommand({ commands: [141, 1] })}
-                    className="px-3 py-2 text-xs bg-gradient-to-r from-fuchsia-500 to-fuchsia-400 text-gray-900 rounded-md hover:from-fuchsia-400 hover:to-fuchsia-300 transition-all duration-300 font-bold relative group"
+                    className="px-3 py-2 text-xs bg-fuchsia-500 text-gray-900 rounded-md hover:bg-fuchsia-400 font-bold"
                   >
-                    <span className="relative z-10">HONK</span>
+                    HONK
                   </button>
+                </div>
+
+                {/* Motor Controls */}
+                <div className="mt-4">
+                  <div className="flex gap-2 items-center">
+                    {/* Side Brush Controls */}
+                    <label className="relative flex-1">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={motorBits.sideBrush}
+                        onChange={(e) => {
+                          const newBits = { ...motorBits, sideBrush: e.target.checked };
+                          setMotorBits(newBits);
+                          const value = (newBits.sideBrush ? 1 : 0) |
+                                      (newBits.vacuum ? 2 : 0) |
+                                      (newBits.mainBrush ? 4 : 0) |
+                                      (newBits.sideBrushDirection ? 8 : 0) |
+                                      (newBits.mainBrushDirection ? 16 : 0);
+                          sendCommand({ commands: [138, value] });
+                        }}
+                      />
+                      <div className={`px-3 py-2 text-xs rounded-md font-bold text-center cursor-pointer w-full
+                        ${motorBits.sideBrush
+                          ? 'bg-green-500 text-gray-900'
+                          : 'bg-gray-700 text-gray-300'}`}>
+                        SIDE
+                      </div>
+                    </label>
+
+                    <label className="relative">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={motorBits.sideBrushDirection}
+                        onChange={(e) => {
+                          const newBits = { ...motorBits, sideBrushDirection: e.target.checked };
+                          setMotorBits(newBits);
+                          const value = (newBits.sideBrush ? 1 : 0) |
+                                      (newBits.vacuum ? 2 : 0) |
+                                      (newBits.mainBrush ? 4 : 0) |
+                                      (newBits.sideBrushDirection ? 8 : 0) |
+                                      (newBits.mainBrushDirection ? 16 : 0);
+                          sendCommand({ commands: [138, value] });
+                        }}
+                      />
+                      <div className={`w-8 h-8 flex items-center justify-center rounded-md cursor-pointer
+                        ${motorBits.sideBrushDirection
+                          ? 'bg-blue-500 text-gray-900'
+                          : 'bg-gray-700 text-gray-300'}`}>
+                        ↺
+                      </div>
+                    </label>
+
+                    {/* Vacuum Control */}
+                    <label className="relative flex-1">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={motorBits.vacuum}
+                        onChange={(e) => {
+                          const newBits = { ...motorBits, vacuum: e.target.checked };
+                          setMotorBits(newBits);
+                          const value = (newBits.sideBrush ? 1 : 0) |
+                                      (newBits.vacuum ? 2 : 0) |
+                                      (newBits.mainBrush ? 4 : 0) |
+                                      (newBits.sideBrushDirection ? 8 : 0) |
+                                      (newBits.mainBrushDirection ? 16 : 0);
+                          sendCommand({ commands: [138, value] });
+                        }}
+                      />
+                      <div className={`px-3 py-2 text-xs rounded-md font-bold text-center cursor-pointer w-full
+                        ${motorBits.vacuum
+                          ? 'bg-green-500 text-gray-900'
+                          : 'bg-gray-700 text-gray-300'}`}>
+                        VAC
+                      </div>
+                    </label>
+
+                    {/* Main Brush Controls */}
+                    <label className="relative flex-1">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={motorBits.mainBrush}
+                        onChange={(e) => {
+                          const newBits = { ...motorBits, mainBrush: e.target.checked };
+                          setMotorBits(newBits);
+                          const value = (newBits.sideBrush ? 1 : 0) |
+                                      (newBits.vacuum ? 2 : 0) |
+                                      (newBits.mainBrush ? 4 : 0) |
+                                      (newBits.sideBrushDirection ? 8 : 0) |
+                                      (newBits.mainBrushDirection ? 16 : 0);
+                          sendCommand({ commands: [138, value] });
+                        }}
+                      />
+                      <div className={`px-3 py-2 text-xs rounded-md font-bold text-center cursor-pointer w-full
+                        ${motorBits.mainBrush
+                          ? 'bg-green-500 text-gray-900'
+                          : 'bg-gray-700 text-gray-300'}`}>
+                        MAIN
+                      </div>
+                    </label>
+
+                    <label className="relative">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={motorBits.mainBrushDirection}
+                        onChange={(e) => {
+                          const newBits = { ...motorBits, mainBrushDirection: e.target.checked };
+                          setMotorBits(newBits);
+                          const value = (newBits.sideBrush ? 1 : 0) |
+                                      (newBits.vacuum ? 2 : 0) |
+                                      (newBits.mainBrush ? 4 : 0) |
+                                      (newBits.sideBrushDirection ? 8 : 0) |
+                                      (newBits.mainBrushDirection ? 16 : 0);
+                          sendCommand({ commands: [138, value] });
+                        }}
+                      />
+                      <div className={`w-8 h-8 flex items-center justify-center rounded-md cursor-pointer
+                        ${motorBits.mainBrushDirection
+                          ? 'bg-blue-500 text-gray-900'
+                          : 'bg-gray-700 text-gray-300'}`}>
+                        ↺
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>

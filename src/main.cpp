@@ -163,13 +163,6 @@ void setup()
     });
 
   // Receive an HTTP GET request
-  server.on("/on", HTTP_GET, [](AsyncWebServerRequest* request) {
-    digitalWrite(LED, HIGH);
-    request->send(200, "text/plain", "ok");
-
-    });
-
-  // Receive an HTTP GET request
   server.on("/off", HTTP_GET, [](AsyncWebServerRequest* request)
     {
       digitalWrite(LED, LOW);

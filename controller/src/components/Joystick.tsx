@@ -74,10 +74,7 @@ export function Joystick({ onMove, size = 200 }: JoystickProps) {
 
   return (
     <div className="relative">
-      {/* Debug Display */}
-      <div className="absolute -top-8 left-0 right-0 text-center text-sm font-mono bg-black/50 text-white rounded px-2 py-1">
-        X: {Math.round(position.x)} Y: {Math.round(position.y)}
-      </div>
+
       <div
         ref={joystickRef}
         className="relative rounded-full touch-none select-none"
