@@ -59,6 +59,8 @@ npm run dev
 
 When you are ready to deploy the app, you can compile it into a single file, and then convert to byte code with `./compile_page_bytes.sh`
 
+Note - i've found that when I change the app - I need to run "clean" with Platform.io - otherwise I get a content length mismatch - likely doesn't re-upload the new binary for the web UI.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
