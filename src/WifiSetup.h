@@ -34,7 +34,6 @@ void WiFi_Setup()
     WiFi.mode(WIFI_STA);
     if (strlen(cfg.password_Router.data) > 8)
     {
-      LOG_F("Connecting to WiFi network: %s with password: %s", cfg.ssid_Router.data, cfg.password_Router.data);
       WiFi.begin(cfg.ssid_Router.data, cfg.password_Router.data);
     }
     else
@@ -90,27 +89,27 @@ void WiFi_Setup()
   }
 }
 
-void wifiSetupCallback(AsyncWebServerRequest *request, uint8_t *data,
-                       size_t len, size_t index, size_t total)
+void wifiSetupCallback(AsyncWebServerRequest* request, uint8_t* data,
+  size_t len, size_t index, size_t total)
 {
   StaticJsonDocument<512> doc;
-  DeserializationError error = deserializeJson(doc, (char *)data);
+  DeserializationError error = deserializeJson(doc, (char*)data);
 
   if (error)
   {
-    AsyncWebServerResponse *response =
-        request->beginResponse(400, "text/plain", "Invalid JSON");
+    AsyncWebServerResponse* response =
+      request->beginResponse(400, "text/plain", "Invalid JSON");
     response->addHeader("Access-Control-Allow-Origin", "*");
     request->send(response);
     return;
   }
 
-  const char *ssid_AP = doc["ssid_AP"];
-  const char *password_AP = doc["password_AP"];
-  const char *ssid_Router = doc["ssid_Router"];
-  const char *password_Router = doc["password_Router"];
-  const char *ipAddr = doc["ipAddr"];
-  const char *hostname = doc["hostname"];
+  const char* ssid_AP = doc["ssid_AP"];
+  const char* password_AP = doc["password_AP"];
+  const char* ssid_Router = doc["ssid_Router"];
+  const char* password_Router = doc["password_Router"];
+  const char* ipAddr = doc["ipAddr"];
+  const char* hostname = doc["hostname"];
 
   if (ssid_AP && password_AP && ssid_Router && password_Router && ipAddr)
   {
@@ -128,30 +127,30 @@ void wifiSetupCallback(AsyncWebServerRequest *request, uint8_t *data,
     // Commit the changes to ensure they are saved
     if (!EEPROM.commit())
     {
-      AsyncWebServerResponse *response = request->beginResponse(
-          400, "text/plain", "Failed to commit EEPROM changes");
+      AsyncWebServerResponse* response = request->beginResponse(
+        400, "text/plain", "Failed to commit EEPROM changes");
       response->addHeader("Access-Control-Allow-Origin", "*");
       request->send(response);
       Serial.println("Failed to commit EEPROM changes");
     }
     else
     {
-      AsyncWebServerResponse *response = request->beginResponse(
-          200, "application/json", "{\"status\":\"Network updated\"}");
+      AsyncWebServerResponse* response = request->beginResponse(
+        200, "application/json", "{\"status\":\"Network updated\"}");
       response->addHeader("Access-Control-Allow-Origin", "*");
       request->send(response);
     }
   }
   else
   {
-    AsyncWebServerResponse *response =
-        request->beginResponse(400, "text/plain", "Invalid parameters");
+    AsyncWebServerResponse* response =
+      request->beginResponse(400, "text/plain", "Invalid parameters");
     response->addHeader("Access-Control-Allow-Origin", "*");
     request->send(response);
   }
 }
 
-void wifiGetConfigCallback(AsyncWebServerRequest *request)
+void wifiGetConfigCallback(AsyncWebServerRequest* request)
 {
   cfg.load();
   // Create a JSON document
@@ -170,8 +169,8 @@ void wifiGetConfigCallback(AsyncWebServerRequest *request)
   serializeJson(doc, responseString);
 
   // Send the JSON response
-  AsyncWebServerResponse *response =
-      request->beginResponse(200, "application/json", responseString);
+  AsyncWebServerResponse* response =
+    request->beginResponse(200, "application/json", responseString);
   response->addHeader("Access-Control-Allow-Origin", "*");
   request->send(response);
 }
